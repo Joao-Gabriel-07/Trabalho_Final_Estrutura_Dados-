@@ -16,9 +16,11 @@ Explicação:
 Gerencia uma playlist de músicas usando uma lista duplamente encadeada. Permite inserir, buscar, editar, remover e listar músicas em ordem normal e reversa, além de exibir estatísticas da playlist.
 
 Como compilar: 
+
 bashgcc musicas.c -o musicas
 
 Como executar: 
+
 bash./musicas
 
 Observações:
@@ -44,9 +46,11 @@ Explicação:
 Simula um sistema de atendimento de emergências utilizando uma pilha encadeada (LIFO). Cada chamada registrada vai para o topo da pilha e é atendida na ordem inversa de chegada. O sistema controla protocolo, local, tipo e horário de cada ocorrência.
 
 Como compilar: 
+
 bashgcc chamadas_emergencia.c -o chamadas
 
 Como executar: 
+
 bash./chamadas
 
 Observações:
