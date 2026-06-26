@@ -1,1 +1,391 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
+typedef struct {
+    int id;
+    char titulo[50];
+    char artista[50];
+    float duracao;
+    char genero[30];
+} Musica;
+
+typedef struct No {
+    Musica dados;
+    struct No* prox;
+    struct No* ant;
+} No;
+
+No* lista = NULL;
+No* ultimo = NULL;
+int totalMusicas = 0;
+
+No* criarNo(Musica m) {
+    No* novo = (No*) malloc(sizeof(No));
+    novo->dados = m;
+    novo->prox = NULL;
+    novo->ant = NULL;
+    return novo;
+}
+
+void inserir() {
+    Musica m;
+
+    printf("\nID: ");
+    scanf("%d", &m.id);
+
+    if (m.id <= 0) {
+        printf("\nID invalido! Digite um numero positivo.\n");
+        return;
+    }
+
+    No* p = lista;
+    while (p != NULL) {
+        if (p->dados.id == m.id) {
+            printf("\nID ja existe!\n");
+            return;
+        }
+        p = p->prox;
+    }
+
+    printf("Titulo: ");
+    scanf(" %[^\n]", m.titulo);
+    if (strlen(m.titulo) == 0) {
+        printf("\nTitulo invalido!\n");
+        return;
+    }
+
+    printf("Artista: ");
+    scanf(" %[^\n]", m.artista);
+    if (strlen(m.artista) == 0) {
+        printf("\nArtista invalido!\n");
+        return;
+    }
+
+    printf("Duracao (minutos): ");
+    scanf("%f", &m.duracao);
+    if (m.duracao <= 0) {
+        printf("\nDuracao invalida!\n");
+        while (getchar() != '\n');
+        return;
+    }
+    while (getchar() != '\n');
+
+    printf("Genero: ");
+    scanf(" %[^\n]", m.genero);
+    if (strlen(m.genero) == 0) {
+        printf("\nGenero invalido!\n");
+        return;
+    }
+
+    No* novo = criarNo(m);
+
+    if (lista == NULL) {
+        lista = novo;
+        ultimo = novo;
+    } else {
+        novo->prox = lista;
+        lista->ant = novo;
+        lista = novo;
+    }
+
+    totalMusicas++;
+    printf("\nMusica inserida!\n");
+}
+
+void listar() {
+    No* p = lista;
+
+    if (p == NULL) {
+        printf("\nLista vazia\n");
+        return;
+    }
+
+    printf("\n(DO INICIO AO FIM)\n");
+    while (p != NULL) {
+        printf("\nID: %d\n", p->dados.id);
+        printf("Titulo: %s\n", p->dados.titulo);
+        printf("Artista: %s\n", p->dados.artista);
+        printf("Duracao: %.2f min\n", p->dados.duracao);
+        printf("Genero: %s\n", p->dados.genero);
+        p = p->prox;
+    }
+}
+
+void listarReverso() {
+    No* p = ultimo;
+
+    if (p == NULL) {
+        printf("\nLista vazia\n");
+        return;
+    }
+
+    printf("\n(DO FIM AO INICIO)\n");
+    while (p != NULL) {
+        printf("\nID: %d\n", p->dados.id);
+        printf("Titulo: %s\n", p->dados.titulo);
+        printf("Artista: %s\n", p->dados.artista);
+        printf("Duracao: %.2f min\n", p->dados.duracao);
+        printf("Genero: %s\n", p->dados.genero);
+        p = p->ant;
+    }
+}
+
+void buscar() {
+    int id;
+    printf("\nBuscar ID: ");
+    scanf("%d", &id);
+
+    No* p = lista;
+    while (p != NULL) {
+        if (p->dados.id == id) {
+            printf("\nID: %d\n", p->dados.id);
+            printf("Titulo: %s\n", p->dados.titulo);
+            printf("Artista: %s\n", p->dados.artista);
+            printf("Duracao: %.2f min\n", p->dados.duracao);
+            printf("Genero: %s\n", p->dados.genero);
+            return;
+        }
+        p = p->prox;
+    }
+
+    printf("\nNao encontrado!\n");
+}
+
+void buscarParcial() {
+    char termo[50];
+    printf("\nDigite parte do titulo ou artista: ");
+    scanf(" %[^\n]", termo);
+
+    No* p = lista;
+    int encontrou = 0;
+
+    while (p != NULL) {
+        if (strstr(p->dados.titulo, termo) != NULL || strstr(p->dados.artista, termo) != NULL) {
+            printf("\nID: %d | %s - %s (%.2f min) [%s]\n",
+                p->dados.id, p->dados.titulo, p->dados.artista,
+                p->dados.duracao, p->dados.genero);
+            encontrou = 1;
+        }
+        p = p->prox;
+    }
+
+    if (!encontrou)
+        printf("\nNenhuma musica encontrada com '%s'.\n", termo);
+}
+
+void editar() {
+    int id;
+    printf("\nID para editar: ");
+    scanf("%d", &id);
+
+    No* p = lista;
+
+    while (p != NULL) {
+        if (p->dados.id == id) {
+            printf("Novo titulo: ");
+            scanf(" %[^\n]", p->dados.titulo);
+            printf("Novo artista: ");
+            scanf(" %[^\n]", p->dados.artista);
+            printf("Nova duracao: ");
+            scanf("%f", &p->dados.duracao);
+            printf("Novo genero: ");
+            scanf(" %[^\n]", p->dados.genero);
+
+            printf("\nEditado!\n");
+            return;
+        }
+        p = p->prox;
+    }
+
+    printf("\nNao encontrado!\n");
+}
+
+void remover() {
+    int id;
+    printf("\nID para remover: ");
+    scanf("%d", &id);
+
+    No* p = lista;
+
+    while (p != NULL) {
+        if (p->dados.id == id) {
+            char confirm;
+            printf("\nTem certeza que deseja remover '%s'? (S/N): ", p->dados.titulo);
+            scanf(" %c", &confirm);
+            if (confirm != 'S' && confirm != 's') {
+                printf("Operacao cancelada.\n");
+                return;
+            }
+
+            if (p->ant != NULL)
+                p->ant->prox = p->prox;
+            else
+                lista = p->prox;
+
+            if (p->prox != NULL)
+                p->prox->ant = p->ant;
+            else
+                ultimo = p->ant;
+
+            free(p);
+            totalMusicas--;
+            printf("\nRemovido!\n");
+            return;
+        }
+        p = p->prox;
+    }
+
+    printf("\nNao encontrado!\n");
+}
+
+void estatisticas() {
+    if (lista == NULL) {
+        printf("\nLista vazia.\n");
+        return;
+    }
+
+    float total = 0;
+    No* p = lista;
+    while (p != NULL) {
+        total += p->dados.duracao;
+        p = p->prox;
+    }
+
+    printf("\n(ESTATISTICAS DA PLAYLIST)\n");
+    printf("\nTotal de musicas: %d\n", totalMusicas);
+    printf("Duracao total: %.2f min\n", total);
+    printf("Duracao media: %.2f min\n", total / totalMusicas);
+}
+
+void limparLista() {
+    if (lista == NULL) {
+        printf("\nLista ja esta vazia.\n");
+        return;
+    }
+
+    char confirm;
+    printf("\nTem certeza que deseja limpar TODA a playlist? (S/N): ");
+    scanf(" %c", &confirm);
+    if (confirm != 'S' && confirm != 's') {
+        printf("Operacao cancelada.\n");
+        return;
+    }
+
+    No* p = lista;
+    while (p != NULL) {
+        No* aux = p->prox;
+        free(p);
+        p = aux;
+    }
+
+    lista = NULL;
+    ultimo = NULL;
+    totalMusicas = 0;
+    printf("\nPlaylist limpa!\n");
+}
+
+void salvarCSV() {
+    FILE* arquivo = fopen("musicas.csv", "w");
+    if (arquivo == NULL) {
+        printf("Erro ao criar o arquivo CSV.\n");
+        return;
+    }
+    fprintf(arquivo, "id;titulo;artista;duracao;genero\n");
+    No* p = lista;
+    while (p != NULL) {
+        fprintf(arquivo, "%d;%s;%s;%.2f;%s\n", p->dados.id, p->dados.titulo, p->dados.artista, p->dados.duracao, p->dados.genero);
+        p = p->prox;
+    }
+    fclose(arquivo);
+    printf("\nDados salvos em 'musicas.csv' com sucesso!\n");
+}
+
+void carregarCSV() {
+    FILE* arquivo = fopen("musicas.csv", "r");
+    if (arquivo == NULL) {
+        printf("\nNenhum arquivo encontrado.\n");
+        return;
+    }
+    char linha[200];
+    fgets(linha, sizeof(linha), arquivo);
+
+    No* pLimp = lista;
+    while (pLimp != NULL){
+        No* aux = pLimp->prox;
+        free(pLimp);
+        pLimp = aux;
+    }
+    lista = NULL;
+    ultimo = NULL;
+    totalMusicas = 0;
+    
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        Musica m;
+        sscanf(linha, "%d;%[^;];%[^;];%f;%[^\n]", &m.id, m.titulo, m.artista, &m.duracao, m.genero);
+        No* novo = criarNo(m);
+
+        if (lista == NULL) {
+            lista = novo;
+            ultimo = novo;
+        } else {
+            novo->prox = lista;
+            lista->ant = novo;
+            lista = novo;
+        }
+        totalMusicas++;
+    }
+    fclose(arquivo);
+    printf("\nPlaylist carregada com sucesso!\n");
+}
+
+int main() {
+    int op;
+
+    do {
+        printf("\n=====================");
+        printf("\n(PLAYLIST DE MUSICAS)");
+        printf("\n---------------------");
+        printf("\nMusicas na lista: [%d]\n", totalMusicas);
+        printf("\n[1] Inserir");
+        printf("\n[2] Listar");
+        printf("\n[3] Listar em Ordem Reversa");
+        printf("\n[4] Buscar por ID");
+        printf("\n[5] Buscar por Titulo/Artista");
+        printf("\n[6] Editar");
+        printf("\n[7] Remover");
+        printf("\n[8] Estatisticas");
+        printf("\n[9] Limpar Playlist");
+        printf("\n[10] Salvar CSV");
+        printf("\n[11] Carregar CSV");
+        printf("\n[12] Sair\n");
+        printf("\nEscolha uma opcao: ");
+        scanf("%d", &op);
+
+        switch(op) {
+            case 1:  inserir(); break;
+            case 2:  listar(); break;
+            case 3:  listarReverso(); break;
+            case 4:  buscar(); break;
+            case 5:  buscarParcial(); break;
+            case 6:  editar(); break;
+            case 7:  remover(); break;
+            case 8:  estatisticas(); break;
+            case 9:  limparLista(); break;
+            case 10: salvarCSV(); break;
+            case 11: carregarCSV(); break;
+            case 12: printf("\nSaindo e limpando memoria...\n"); break;
+            default: printf("\nOpcao invalida!\n");
+        }
+
+    } while (op != 12);
+
+    No* p = lista;
+    while (p != NULL) {
+        No* aux = p->prox;
+        free(p);
+        p = aux;
+    }
+
+    return 0;
+}
