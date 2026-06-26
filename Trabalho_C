@@ -1,0 +1,502 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+ 
+typedef struct {
+    int id;
+    char arquivo[50];
+    int paginas;
+    char tipo;
+} Trabalho;
+ 
+typedef struct No {
+    Trabalho dados;
+    struct No* prox;
+} No;
+ 
+No* inicioNormal = NULL;
+No* fimNormal = NULL;
+ 
+No* inicioPrio = NULL;
+No* fimPrio = NULL;
+ 
+int totalProcessados = 0;
+int totalNaFila = 0;
+int totalPrioritariosProcessados = 0;
+int totalNormaisProcessados = 0;
+int totalPaginasImpressas = 0;
+ 
+int idExiste(int id) {
+    No* p = inicioNormal;
+    while (p != NULL) {
+        if (p->dados.id == id) 
+        return 1;
+        p = p->prox;
+    }
+    if (inicioPrio != NULL) {
+        No* p2 = inicioPrio;
+        do {
+            if (p2->dados.id == id) 
+            return 1;
+            p2 = p2->prox;
+        } while (p2 != inicioPrio);
+    }
+    return 0;
+}
+ 
+void enfileirar() {
+    Trabalho t;
+ 
+    printf("\nID do trabalho: ");
+    scanf("%d", &t.id);
+ 
+    if (t.id <= 0) {
+        printf("\nID invalido!\n");
+        return;
+    }
+ 
+    if (idExiste(t.id)) {
+        printf("\nID %d ja existe na fila!\n", t.id);
+        return;
+    }
+ 
+    printf("Nome do arquivo: ");
+    scanf(" %[^\n]", t.arquivo);
+ 
+    printf("Numero de paginas: ");
+    scanf("%d", &t.paginas);
+    if (t.paginas <= 0) {
+        printf("\nNumero de paginas invalido!\n");
+        return;
+    }
+ 
+    printf("Tipo (N = Normal / P = Prioritario): ");
+    scanf(" %c", &t.tipo);
+    if (t.tipo != 'N' && t.tipo != 'n' && t.tipo != 'P' && t.tipo != 'p') {
+        printf("\nTipo invalido! Use N ou P.\n");
+        return;
+    }
+    if (t.tipo == 'n') t.tipo = 'N';
+    if (t.tipo == 'p') t.tipo = 'P';
+ 
+    No* novo = (No*) malloc(sizeof(No));
+    novo->dados = t;
+    novo->prox = NULL;
+ 
+    if (t.tipo == 'N') {
+        if (inicioNormal == NULL) {
+            inicioNormal = novo;
+            fimNormal = novo;
+        } else {
+            fimNormal->prox = novo;
+            fimNormal = novo;
+        }
+        printf("\nTrabalho normal enfileirado!\n");
+    } else {
+        if (inicioPrio == NULL) {
+            inicioPrio = novo;
+            fimPrio = novo;
+            novo->prox = inicioPrio;
+        } else {
+            fimPrio->prox = novo;
+            fimPrio = novo;
+            fimPrio->prox = inicioPrio;
+        }
+        printf("\nTrabalho prioritario enfileirado!\n");
+    }
+ 
+    totalNaFila++;
+}
+ 
+void processar() {
+    if (inicioPrio == NULL && inicioNormal == NULL) {
+        printf("\nNenhum trabalho na fila!\n");
+        return;
+    }
+ 
+    No* aux = NULL;
+ 
+    if (inicioPrio != NULL) {
+        aux = inicioPrio;
+        printf("\n(PROCESSANDO PRIORITARIO)\n");
+ 
+        if (inicioPrio == fimPrio) {
+            inicioPrio = NULL;
+            fimPrio = NULL;
+        } else {
+            inicioPrio = inicioPrio->prox;
+            fimPrio->prox = inicioPrio;
+        }
+    } else {
+        aux = inicioNormal;
+        printf("\n(PROCESSANDO NORMAL)\n");
+ 
+        inicioNormal = inicioNormal->prox;
+        if (inicioNormal == NULL)
+            fimNormal = NULL;
+    }
+ 
+    printf("ID: %d\n", aux->dados.id);
+    printf("Arquivo: %s\n", aux->dados.arquivo);
+    printf("Paginas: %d\n", aux->dados.paginas);
+    printf("Tipo: %c\n", aux->dados.tipo);
+ 
+    if (aux->dados.tipo == 'P')
+        totalPrioritariosProcessados++;
+    else
+        totalNormaisProcessados++;
+    totalPaginasImpressas += aux->dados.paginas;
+ 
+    free(aux);
+    totalProcessados++;
+    totalNaFila--;
+    printf("\nTrabalho processado e removido da fila!\n");
+    printf("Total processados: %d\n", totalProcessados);
+}
+ 
+void consultarProximo() {
+    if (inicioPrio == NULL && inicioNormal == NULL) {
+        printf("\nNenhum trabalho na fila!\n");
+        return;
+    }
+ 
+    No* prox = (inicioPrio != NULL) ? inicioPrio : inicioNormal;
+ 
+    printf("\n(PROXIMO A SER PROCESSADO)\n");
+    printf("ID: %d\n", prox->dados.id);
+    printf("Arquivo: %s\n", prox->dados.arquivo);
+    printf("Paginas: %d\n", prox->dados.paginas);
+    printf("Tipo: %c\n", prox->dados.tipo);
+}
+ 
+void listar() {
+    printf("\n(FILA PRIORITARIA - Circular Encadeada)\n");
+    if (inicioPrio == NULL) {
+        printf("Vazia.\n");
+    } else {
+        No* p = inicioPrio;
+        int i = 1;
+        do {
+            printf("[%d] ID: %d | %s | %d pags\n", i++, p->dados.id, p->dados.arquivo, p->dados.paginas);
+            p = p->prox;
+        } while (p != inicioPrio);
+    }
+ 
+    printf("\n(FILA NORMAL - Dinamica Simples)\n");
+    if (inicioNormal == NULL) {
+        printf("Vazia.\n");
+    } else {
+        No* p = inicioNormal;
+        int i = 1;
+        while (p != NULL) {
+            printf("[%d] ID: %d | %s | %d pags\n", i++, p->dados.id, p->dados.arquivo, p->dados.paginas);
+            p = p->prox;
+        }
+    }
+ 
+    printf("\nTotal na fila: [%d]\n", totalNaFila);
+}
+ 
+void buscar() {
+    int id;
+    printf("\nBuscar ID: ");
+    scanf("%d", &id);
+ 
+    No* p = inicioNormal;
+    while (p != NULL) {
+        if (p->dados.id == id) {
+            printf("\n(ENCONTRADO NA FILA NORMAL)\n");
+            printf("Arquivo: %s | Paginas: %d\n", p->dados.arquivo, p->dados.paginas);
+            return;
+        }
+        p = p->prox;
+    }
+ 
+    if (inicioPrio != NULL) {
+        No* p2 = inicioPrio;
+        do {
+            if (p2->dados.id == id) {
+                printf("\n(ENCONTRADO NA FILA PRIORITARIA)\n");
+                printf("Arquivo: %s | Paginas: %d\n", p2->dados.arquivo, p2->dados.paginas);
+                return;
+            }
+            p2 = p2->prox;
+        } while (p2 != inicioPrio);
+    }
+ 
+    printf("\nNao encontrado!\n");
+}
+ 
+void cancelar() {
+    int id;
+    printf("\nID para cancelar: ");
+    scanf("%d", &id);
+ 
+    No* p = inicioNormal;
+    No* ant = NULL;
+    while (p != NULL) {
+        if (p->dados.id == id) {
+            char confirm;
+            printf("\nCancelar '%s'? (S/N): ", p->dados.arquivo);
+            scanf(" %c", &confirm);
+            if (confirm != 'S' && confirm != 's') {
+                printf("Operacao cancelada.\n");
+                return;
+            }
+            if (ant == NULL)
+                inicioNormal = p->prox;
+            else
+                ant->prox = p->prox;
+            if (p == fimNormal)
+                fimNormal = ant;
+            free(p);
+            totalNaFila--;
+            printf("\nTrabalho cancelado!\n");
+            return;
+        }
+        ant = p;
+        p = p->prox;
+    }
+ 
+    if (inicioPrio != NULL) {
+        No* cur = inicioPrio;
+        No* prev = fimPrio;
+        do {
+            if (cur->dados.id == id) {
+                char confirm;
+                printf("\nCancelar '%s'? (S/N): ", cur->dados.arquivo);
+                scanf(" %c", &confirm);
+                if (confirm != 'S' && confirm != 's') {
+                    printf("Operacao cancelada.\n");
+                    return;
+                }
+                if (cur == inicioPrio && cur == fimPrio) {
+                    inicioPrio = NULL;
+                    fimPrio = NULL;
+                } else {
+                    prev->prox = cur->prox;
+                    if (cur == inicioPrio)
+                        inicioPrio = cur->prox;
+                    if (cur == fimPrio)
+                        fimPrio = prev;
+                }
+                free(cur);
+                totalNaFila--;
+                printf("\nTrabalho cancelado!\n");
+                return;
+            }
+            prev = cur;
+            cur = cur->prox;
+        } while (cur != inicioPrio);
+    }
+ 
+    printf("\nNao encontrado!\n");
+}
+ 
+void estatisticas() {
+    printf("\n(ESTATISTICAS DE ATENDIMENTO)\n");
+    printf("Total processados: [%d]\n", totalProcessados);
+    printf("Prioritarios processados: [%d]\n", totalPrioritariosProcessados);
+    printf("Normais processados: [%d]\n", totalNormaisProcessados);
+    printf("Total de paginas impressas: [%d]\n", totalPaginasImpressas);
+    printf("Trabalhos ainda na fila: [%d]\n", totalNaFila);
+}
+ 
+void Relatoriotxt() {
+    FILE* arq = fopen("relatorio_impressao.txt", "w");
+    if (arq == NULL) {
+        perror("Erro ao criar relatorio");
+        return;
+    }
+ 
+    fprintf(arq, "==============================\n");
+    fprintf(arq, "(RELATORIO DA FILA DE IMPRESSAO)\n");
+    fprintf(arq, "------------------------------\n");
+    fprintf(arq, "Total processados: [%d]\n", totalProcessados);
+    fprintf(arq, "Prioritarios processados: [%d]\n", totalPrioritariosProcessados);
+    fprintf(arq, "Normais processados: [%d]\n", totalNormaisProcessados);
+    fprintf(arq, "Total de paginas impressas: [%d]\n", totalPaginasImpressas);
+    fprintf(arq, "Trabalhos ainda na fila: [%d]\n", totalNaFila);
+    fprintf(arq, "----------------------------------------\n");
+    fprintf(arq, "(FILA PRIORITARIA PENDENTE)\n");
+ 
+    if (inicioPrio != NULL) {
+        No* p = inicioPrio;
+        int i = 1;
+        do {
+            fprintf(arq, "[%d] ID: %d | %s | %d pags\n", i++, p->dados.id, p->dados.arquivo, p->dados.paginas);
+            p = p->prox;
+        } while (p != inicioPrio);
+    } else {
+        fprintf(arq, "Vazia.\n");
+    }
+ 
+    fprintf(arq, "\n(FILA NORMAL PENDENTE)\n");
+    No* p = inicioNormal;
+    if (p == NULL) {
+        fprintf(arq, "Vazia.\n");
+    } else {
+        int i = 1;
+        while (p != NULL) {
+            fprintf(arq, "[%d] ID: %d | %s | %d pags\n", i++, p->dados.id, p->dados.arquivo, p->dados.paginas);
+            p = p->prox;
+        }
+    }
+ 
+    fprintf(arq, "========================================\n");
+    fclose(arq);
+    printf("\nRelatorio exportado em 'relatorio_impressao.txt'!\n");
+}
+ 
+void salvarCSV() {
+    FILE* arq = fopen("impressao.csv", "w");
+    if (arq == NULL) {
+        perror("Erro ao criar CSV");
+        return;
+    }
+ 
+    fprintf(arq, "id;arquivo;paginas;tipo\n");
+ 
+    if (inicioPrio != NULL) {
+        No* p = inicioPrio;
+        do {
+            fprintf(arq, "%d;%s;%d;%c\n", p->dados.id, p->dados.arquivo, p->dados.paginas, p->dados.tipo);
+            p = p->prox;
+        } while (p != inicioPrio);
+    }
+ 
+    No* p = inicioNormal;
+    while (p != NULL) {
+        fprintf(arq, "%d;%s;%d;%c\n", p->dados.id, p->dados.arquivo, p->dados.paginas, p->dados.tipo);
+        p = p->prox;
+    }
+ 
+    fclose(arq);
+    printf("\nDados salvos em 'impressao.csv'!\n");
+}
+ 
+ void carregarCSV() {
+    FILE* arq = fopen("impressao.csv", "r");
+    if (arq == NULL) {
+        printf("\nNenhum arquivo encontrado.\n");
+        return;
+    }
+ 
+    char linha[200];
+    fgets(linha, sizeof(linha), arq); 
+ 
+    // Limpa fila normal
+    No* pLimp = inicioNormal;
+    while (pLimp != NULL) {
+        No* aux = pLimp->prox;
+        free(pLimp);
+        pLimp = aux;
+    }
+    inicioNormal = NULL;
+    fimNormal = NULL;
+ 
+    // Limpa fila prioritaria
+    if (inicioPrio != NULL) {
+        No* cur = inicioPrio;
+        do {
+            No* aux = cur->prox;
+            free(cur);
+            cur = aux;
+        } while (cur != inicioPrio);
+        inicioPrio = NULL;
+        fimPrio = NULL;
+    }
+    totalNaFila = 0;
+ 
+    while (fgets(linha, sizeof(linha), arq)) {
+        Trabalho t;
+        sscanf(linha, "%d;%[^;];%d;%c", &t.id, t.arquivo, &t.paginas, &t.tipo);
+ 
+        No* novo = (No*) malloc(sizeof(No));
+        novo->dados = t;
+        novo->prox = NULL;
+ 
+        if (t.tipo == 'N') {
+            if (inicioNormal == NULL) {
+                inicioNormal = novo;
+                fimNormal = novo;
+            } else {
+                fimNormal->prox = novo;
+                fimNormal = novo;
+            }
+        } else {
+            if (inicioPrio == NULL) {
+                inicioPrio = novo;
+                fimPrio = novo;
+                novo->prox = inicioPrio;
+            } else {
+                fimPrio->prox = novo;
+                fimPrio = novo;
+                fimPrio->prox = inicioPrio;
+            }
+        }
+        totalNaFila++;
+    }
+ 
+    fclose(arq);
+    printf("\nFila reconstruida com sucesso!\n");
+    printf("Trabalhos carregados: %d\n", totalNaFila);
+}
+
+int main() {
+    int op;
+ 
+    do {
+        printf("\n===============================");
+        printf("\n     (FILA DE IMPRESSAO)\n");
+        printf("-------------------------------");
+        printf("\nNa fila: [%d] | Processados: [%d]\n", totalNaFila, totalProcessados);
+        printf("\n[1] Enfileirar Trabalho");
+        printf("\n[2] Processar Proximo");
+        printf("\n[3] Consultar Proximo");
+        printf("\n[4] Listar Filas");
+        printf("\n[5] Buscar por ID");
+        printf("\n[6] Cancelar Trabalho");
+        printf("\n[7] Estatisticas");
+        printf("\n[8] Relatorio .txt");
+        printf("\n[9] Salvar CSV");
+        printf("\n[10] Carregar CSV");
+        printf("\n[11] Sair\n");
+        printf("\nEscolha uma opcao: ");
+        scanf("%d", &op);
+ 
+        switch(op) {
+            case 1:  enfileirar(); break;
+            case 2:  processar(); break;
+            case 3:  consultarProximo(); break;
+            case 4:  listar(); break;
+            case 5:  buscar(); break;
+            case 6:  cancelar(); break;
+            case 7:  estatisticas(); break;
+            case 8:  Relatoriotxt(); break;
+            case 9:  salvarCSV(); break;
+            case 10: carregarCSV(); break;
+            case 11: printf("\nSaindo e limpando memoria...\n"); break;
+            default: printf("\nOpcao invalida!\n");
+        }
+ 
+    } while (op != 11);
+ 
+    No* p = inicioNormal;
+    while (p != NULL) {
+        No* aux = p->prox;
+        free(p);
+        p = aux;
+    }
+ 
+    if (inicioPrio != NULL) {
+        No* cur = inicioPrio;
+        do {
+            No* aux = cur->prox;
+            free(cur);
+            cur = aux;
+        } while (cur != inicioPrio);
+    }
+ 
+    return 0;
+}
