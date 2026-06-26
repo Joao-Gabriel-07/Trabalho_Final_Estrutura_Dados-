@@ -1,2 +1,7 @@
 # Trabalho_Final_Estrutura_Dados-
-Participantes: Filipe Araújo, João Gabriel da Silva Batista e Raul Bastos
+
+Participantes: Filipe Araújo, João Gabriel da Silva Batista e Raul Bastos.
+
+Turma: Matutino.
+
+Trabalho A - Tema A1 Playlist de Musica.
