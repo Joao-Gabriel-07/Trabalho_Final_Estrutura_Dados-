@@ -11,7 +11,7 @@ Trabalho C - Tema C2 Filas de Impressão.
 
 Trabalho A — Playlist de Músicas (Lista Duplamente Encadeada)
 
-Explicação
+Explicação:
 
 Gerencia uma playlist de músicas usando uma lista duplamente encadeada. Permite inserir, buscar, editar, remover e listar músicas em ordem normal e reversa, além de exibir estatísticas da playlist.
 
