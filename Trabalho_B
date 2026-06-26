@@ -1,0 +1,251 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define RESET   "\033[0m"
+#define BOLD    "\033[1m"
+#define RED     "\033[1;31m"
+#define GREEN   "\033[1;32m"
+#define YELLOW  "\033[1;33m"
+#define CYAN    "\033[1;36m"
+#define WHITE   "\033[1;37m"
+#define BG_RED  "\033[41m"
+
+typedef struct {
+    int protocolo;
+    char local[50];
+    char tipo[30];
+    char horario[20];
+} Chamada;
+
+typedef struct No {
+    Chamada dados;
+    struct No* prox;
+} No;
+
+No* topo = NULL;
+int totalNaPilha = 0;
+int totalAtendidas = 0;
+
+int protocoloExiste(int prot) {
+    No* atual = topo;
+    while (atual != NULL) {
+        if (atual->dados.protocolo == prot)
+        return 1;
+        atual = atual->prox;
+    }
+    return 0;
+}
+
+void push() {
+    Chamada x;
+
+    printf(CYAN "\nNumero do protocolo: " RESET);
+    scanf("%d", &x.protocolo);
+
+    if (protocoloExiste(x.protocolo)) {
+        printf(RED "\nErro: Protocolo %d ja existe!\n" RESET, x.protocolo);
+        return;
+    }
+
+    printf(CYAN "Local da Emergencia: " RESET);
+    scanf(" %[^\n]", x.local);
+    printf(CYAN "Tipo da Ocorrencia: " RESET);
+    scanf(" %[^\n]", x.tipo);
+    printf(CYAN "Horario (HH:MM): " RESET);
+    scanf(" %[^\n]", x.horario);
+
+    No* novo = (No*) malloc(sizeof(No));
+    novo->dados = x;
+    novo->prox = topo;
+    topo = novo;
+    totalNaPilha++;
+
+    printf(GREEN "\nChamada %d registrada no topo da pilha!\n" RESET, x.protocolo);
+    printf(YELLOW "Chamadas na pilha: %d\n" RESET, totalNaPilha);
+}
+
+void pop() {
+    if (topo == NULL) {
+        printf(YELLOW "\nNao ha chamadas na fila de emergencia (Pilha Vazia).\n" RESET);
+        return;
+    }
+
+    char confirm;
+    printf(YELLOW "\nTem certeza que deseja atender e remover a chamada do topo? (S/N): " RESET);
+    scanf(" %c", &confirm);
+    if (confirm != 'S' && confirm != 's') {
+        printf(RED "Operacao cancelada.\n" RESET);
+        return;
+    }
+
+    No* aux = topo;
+
+    printf(BG_RED WHITE "\n(ATENDENDO CHAMADA)" RESET);
+    printf(WHITE "\nProtocolo: %d" RESET, aux->dados.protocolo);
+    printf(WHITE "\nTipo: %s | Local: %s\n\n" RESET, aux->dados.tipo, aux->dados.local);
+
+    topo = topo->prox;
+    free(aux);
+
+    totalNaPilha--;
+    totalAtendidas++;
+
+    printf(GREEN "Chamada encerrada e removida do topo!\n" RESET);
+    printf(YELLOW "Chamadas atendidas ate agora: %d | Chamadas na pilha: %d\n" RESET, totalAtendidas, totalNaPilha);
+}
+
+void peek() {
+    if (topo == NULL) {
+        printf(YELLOW "\nNao ha chamadas para consultar.\n" RESET);
+        return;
+    }
+
+    printf(BG_RED WHITE "\n(PROXIMA CHAMADA A SER ATENDIDA)" RESET"\n");
+    printf("Protocolo: %d\n", topo->dados.protocolo);
+    printf("Local: %s\n", topo->dados.local);
+    printf("Tipo: %s\n", topo->dados.tipo);
+    printf("Horario: %s\n", topo->dados.horario);
+}
+
+void listar() {
+    if (topo == NULL) {
+        printf(YELLOW "\nPilha Vazia. Nenhuma chamada pendente.\n" RESET);
+        return;
+    }
+
+    No* p = topo;
+    printf(BG_RED WHITE "\n(PILHA DE CHAMADAS - Do topo ate a base)" RESET"\n");
+    int i = 1;
+    while (p != NULL) {
+        printf("[%d] Protocolo: %d | %s em %s as %s\n", i++, p->dados.protocolo, p->dados.tipo, p->dados.local, p->dados.horario);
+        p = p->prox;
+    }
+    printf(YELLOW "Total na pilha: %d\n" RESET, totalNaPilha);
+}
+
+void salvarCSV() {
+    FILE* arquivo = fopen("chamadas.csv", "w");
+    if (arquivo == NULL) {
+        perror("Erro ao criar o arquivo CSV");
+        return;
+    }
+
+    fprintf(arquivo, "protocolo;local;tipo;horario\n");
+
+    No* p = topo;
+    while (p != NULL) {
+        fprintf(arquivo, "%d;%s;%s;%s\n", p->dados.protocolo, p->dados.local, p->dados.tipo, p->dados.horario);
+        p = p->prox;
+    }
+
+    fclose(arquivo);
+    printf(GREEN "\nDados salvos em 'chamadas.csv' com sucesso!\n" RESET);
+}
+
+void carregarCSV() {
+    FILE* arquivo = fopen("chamadas.csv", "r");
+    if (arquivo == NULL) {
+        printf(YELLOW "\nNenhum arquivo de salvamento encontrado.\n" RESET);
+        return;
+    }
+
+    char linha[200];
+    fgets(linha, sizeof(linha), arquivo); // pula cabecalho
+
+    No* p = topo;
+    while (p != NULL) {
+        No* aux = p->prox;
+        free(p);
+        p = aux;
+    }
+    topo = NULL;
+    totalNaPilha = 0;
+
+    while (fgets(linha, sizeof(linha), arquivo)) {
+        Chamada x;
+        sscanf(linha, "%d;%[^;];%[^;];%[^\n]", &x.protocolo, x.local, x.tipo, x.horario);
+
+        No* novo = (No*) malloc(sizeof(No));
+        novo->dados = x;
+        novo->prox = topo;
+        topo = novo;
+        totalNaPilha++;
+    }
+
+    fclose(arquivo);
+    printf(GREEN "\nPilha reconstruida a partir do CSV com sucesso!\n" RESET);
+    printf(YELLOW "Chamadas carregadas: %d\n" RESET, totalNaPilha);
+}
+
+void exportarRelatorio() {
+    FILE* arq = fopen("relatorio.txt", "w");
+    if (arq == NULL) {
+        perror("Erro ao criar relatorio");
+        return;
+    }
+
+    fprintf(arq, "========================================\n");
+    fprintf(arq, "   RELATORIO DO SISTEMA DE EMERGENCIA\n");
+    fprintf(arq, "========================================\n");
+    fprintf(arq, "Total de chamadas na pilha: %d\n", totalNaPilha);
+    fprintf(arq, "Total de chamadas atendidas: %d\n", totalAtendidas);
+    fprintf(arq, "----------------------------------------\n");
+    fprintf(arq, "CHAMADAS PENDENTES (topo ate base):\n\n");
+
+    No* p = topo;
+    int i = 1;
+    while (p != NULL) {
+        fprintf(arq, "[%d] Protocolo: %d\n", i++, p->dados.protocolo);
+        fprintf(arq, "    Local: %s\n", p->dados.local);
+        fprintf(arq, "    Tipo: %s\n", p->dados.tipo);
+        fprintf(arq, "    Horario: %s\n\n", p->dados.horario);
+        p = p->prox;
+    }
+
+    fprintf(arq, "========================================\n");
+    fclose(arq);
+    printf(GREEN "\nRelatorio exportado em 'relatorio.txt' com sucesso!\n" RESET);
+}
+
+int main() {
+    int op;
+
+    do {
+        printf(CYAN "\n=======================================\n" RESET);
+        printf(BOLD "(SISTEMA DE CHAMADAS DE EMERGENCIA)\n" RESET);
+        printf(YELLOW "Chamadas na pilha: [%d] | Atendidas: [%d]" RESET, totalNaPilha, totalAtendidas);
+        printf(CYAN "\n=======================================\n" RESET);
+        printf("[1] Registrar Chamada (Push)\n");
+        printf("[2] Atender Chamada (Pop)\n");
+        printf("[3] Consultar Proxima (Peek)\n");
+        printf("[4] Listar Todas as Chamadas\n");
+        printf("[5] Salvar em CSV\n");
+        printf("[6] Carregar do CSV\n");
+        printf("[7] Exportar Relatorio .txt\n");
+        printf("[8] Sair\n");
+        printf(CYAN "\nEscolha uma opcao: " RESET);
+        scanf("%d", &op);
+
+        switch (op) {
+            case 1: push(); break;
+            case 2: pop(); break;
+            case 3: peek(); break;
+            case 4: listar(); break;
+            case 5: salvarCSV(); break;
+            case 6: carregarCSV(); break;
+            case 7: exportarRelatorio(); break;
+            case 8: printf(GREEN "\nSaindo e limpando memoria...\n" RESET); break;
+            default: printf(RED "\nOpcao invalida!\n" RESET);
+        }
+    } while (op != 8);
+
+    No* p = topo;
+    while (p != NULL) {
+        No* aux = p->prox;
+        free(p);
+        p = aux;
+    }
+
+    return 0;
+}
