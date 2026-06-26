@@ -9,7 +9,7 @@ Trabalho B - Tema B2 Chamadas de Emergência.
 Trabalho C - Tema C2 Filas de Impressão.
 
 
-Trabalho A — Playlist de Músicas (Lista Duplamente Encadeada)
+#Trabalho A — Playlist de Músicas (Lista Duplamente Encadeada)
 
 Explicação:
 
@@ -39,7 +39,7 @@ Manter os ponteiros ant e ultimo corretamente atualizados durante inserção e r
 Leitura de float com scanf deixava o buffer sujo, exigindo while (getchar() != '\n') para limpar.
 
 
-Trabalho B — Sistema de Chamadas de Emergência (Pilha)
+#Trabalho B — Sistema de Chamadas de Emergência (Pilha)
 
 Explicação:
 
@@ -69,7 +69,7 @@ Ajuste do scanf(" %[^\n]") para leitura correta de strings com espaços.
 Garantir que o carregamento do CSV reconstruísse a pilha na ordem correta, inserindo no topo.
 Permissão para criar arquivos em notebooks institucionais com restrições de escrita.
 
-Trabalho C — Fila de Impressão (Fila Normal + Fila Circular Encadeada)
+#Trabalho C — Fila de Impressão (Fila Normal + Fila Circular Encadeada)
 
 Explicação:
 
